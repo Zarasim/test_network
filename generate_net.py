@@ -4,6 +4,11 @@ import community as community_louvain
 from numpy.random import normal
 
 from networkx.algorithms.community.quality import partition_quality
+from pyvis.network import Network
+import random
+
+
+def r(): return random.randint(0, 255)
 
 
 def _find_between_community_edges(g, partition):
@@ -166,12 +171,31 @@ G_sbm = set_weight_edges(G_sbm, partition)
 new_partition = [[k for (k, v) in partition.items() if v == i]
                  for i in range(max(partition.values())+1)]
 
-
-print(partition)
-print(new_partition)
+n_clusters = len(new_partition)
 
 coverage, performance = partition_quality(G_sbm, new_partition)
-
 print(coverage, performance)
 
-plot_sbm(G_sbm, partition)
+
+colors = ['#%02X%02X%02X' % (r(), r(), r()) for _ in range(n_clusters)]
+
+for node in G_sbm.nodes():
+    G_sbm.nodes[node]['title'] = f'Number {node}'
+    G_sbm.nodes[node]['label'] = str(partition[node])
+    G_sbm.nodes[node]['value'] = G_sbm.degree[node]
+    G_sbm.nodes[node]['color'] = colors[partition[node]]
+    G_sbm.nodes[node]['group'] = partition[node]
+
+net = Network(width="100%", height='1200px', filter_menu=False,
+              bgcolor="white", font_color="black")
+net.from_nx(G_sbm)
+
+#plot_sbm(G_sbm, partition)
+net.toggle_physics(False)
+net.show_buttons(filter_=['physics', 'edges', 'nodes'])
+html_net = net.generate_html(name="index.html", local=True, notebook=False)
+
+with open("graph.html", "w") as html_file:
+    html_file.write(html_net)
+
+# python3 -m http.server 8000
