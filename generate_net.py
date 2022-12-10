@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import community as community_louvain
 from numpy.random import normal
 
+from networkx.algorithms.community import modularity as nx_modularity
 from networkx.algorithms.community.quality import partition_quality
 from pyvis.network import Network
 import random
@@ -153,9 +154,9 @@ def generate_sbm(size, probs, seed):
 # Set size of each community
 community_sizes = [10, 10, 10]
 # Edge probabilities between each community
-community_probs = [[0.9, 0.04, 0.04],
-                   [0.04, 0.9, 0.04],
-                   [0.04, 0.04, 0.7]]
+community_probs = [[0.9, 0.04, 0.02],
+                   [0.04, 0.9, 0.01],
+                   [0.02, 0.01, 0.9]]
 seed = 42
 
 G_sbm = generate_sbm(community_sizes, community_probs, seed)
@@ -174,7 +175,11 @@ new_partition = [[k for (k, v) in partition.items() if v == i]
 n_clusters = len(new_partition)
 
 coverage, performance = partition_quality(G_sbm, new_partition)
-print(coverage, performance)
+modularity = nx_modularity(
+    G_sbm, communities=new_partition, weight="weight", resolution=1)
+
+print(
+    f"coverage: {coverage}, performance: {performance}, modularity {modularity}")
 
 
 colors = ['#%02X%02X%02X' % (r(), r(), r()) for _ in range(n_clusters)]
